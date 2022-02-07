@@ -3,7 +3,7 @@ import mimetypes
 import os
 import socket
 import subprocess
-
+import multiprocessing 
 class HTTPServer:
     '''
         Remove the pass statement below and write your code here
@@ -14,8 +14,8 @@ class HTTPServer:
         self._port = port
         self.rootdirectory = os.getcwd()
         self.sock = socket.socket()
-        self.seraddress = (self._host, self._port)
-        self.sock.bind(self.seraddress)
+        self.addr = (self._host, self._port)
+        self.sock.bind(self.addr)
         self.start()
 
     def start(self):
@@ -23,11 +23,13 @@ class HTTPServer:
         while True:
             print('waiting for connection ---')
             c,cip = self.sock.accept()
-            self.clienturl(c)
+            # self.clienturl(c)
+            process=multiprocessing.Process(target=self.clienturl, args=(c,))
+            process.start()
+            process.join()
 
     def clienturl(self,c):
 
-            #response for nrml localhost browser when entered
             msg = c.recv(1024).decode()
             msg_headers = msg.splitlines()
             file_name = msg_headers[0].split(" ")[1] 
@@ -44,7 +46,7 @@ class HTTPServer:
                 c.send("HTTP/1.1 404 Failed\r\n".encode())
 
     def Ls(self,url,file_name,c):
-            #response for the url '/www' when entered
+            
                 res = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 1024\nConnection: Closed\n\n"
                 for subdirs,dirs,files in os.walk(url):
                     for file in files:
@@ -72,15 +74,15 @@ class HTTPServer:
                             response+= "<html><body><a href" + "=" + os.path.join(file_name,file) + ">"+file+"</a><br></body></html>\r\n\r\n" +"\r\n"
                     c.sendall(response.encode())
                 elif file_name=='/bin/test.py':
-                    process=subprocess.Popen('python D:\\ComputerSystems-p3\\ComputerSystems-p3\\bin\\test.py', shell=True, stdout=subprocess.PIPE)
-                    comm = process.communicate()[0]
+                    process1=subprocess.Popen('python D:\\ComputerSystems-p3\\ComputerSystems-p3\\bin\\test.py', shell=True, stdout=subprocess.PIPE)
+                    comm = process1.communicate()[0]
                     d=comm.decode()
                     data= "HTTP/1.1 200 OK\nContent-Type: text/plain \n Content-Length: 1024\nConnection: Closed\n\n"
                     data=data.encode()
                     res=data+d.encode()
                     c.sendall(res) 
                 elif file_name=='/bin/ls' :
-                    res = os.popen('dir')
+                    res = os.popen('dir/w')
                     read=res.read()
                     data= "HTTP/1.1 200 OK\nContent-Type: text/plain \n Content-Length: 1024\nConnection: Closed\n\n"
                     data=data.encode()

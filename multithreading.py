@@ -3,12 +3,12 @@ import mimetypes
 import os
 import socket
 import subprocess
-
+import threading
 class HTTPServer:
     '''
         Remove the pass statement below and write your code here
     '''
-    def __init__(self,host,port) :
+    def _init_(self,host,port) :
 
         self._host = host
         self._port = port
@@ -18,16 +18,18 @@ class HTTPServer:
         self.sock.bind(self.seraddress)
         self.start()
 
-    def start(self):
+    def start(self): 
         self.sock.listen()
         while True:
             print('waiting for connection ---')
             c,cip = self.sock.accept()
             self.clienturl(c)
+            process=threading.Thread(target=self.clienturl,args=(c,))
+            process.start()
+            process.join()
 
     def clienturl(self,c):
 
-            #response for nrml localhost browser when entered
             msg = c.recv(1024).decode()
             msg_headers = msg.splitlines()
             file_name = msg_headers[0].split(" ")[1] 
@@ -44,7 +46,7 @@ class HTTPServer:
                 c.send("HTTP/1.1 404 Failed\r\n".encode())
 
     def Ls(self,url,file_name,c):
-            #response for the url '/www' when entered
+            
                 res = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 1024\nConnection: Closed\n\n"
                 for subdirs,dirs,files in os.walk(url):
                     for file in files:
@@ -80,7 +82,7 @@ class HTTPServer:
                     res=data+d.encode()
                     c.sendall(res) 
                 elif file_name=='/bin/ls' :
-                    res = os.popen('dir')
+                    res = os.popen('dir/w')
                     read=res.read()
                     data= "HTTP/1.1 200 OK\nContent-Type: text/plain \n Content-Length: 1024\nConnection: Closed\n\n"
                     data=data.encode()
